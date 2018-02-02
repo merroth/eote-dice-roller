@@ -57,7 +57,7 @@ class EOTEROLL {
 				let img = document.createElement("img")
 				img.src = `http://game2.ca/eote/${val}.png`;
 				img.title = val[0].toUpperCase() + val.slice(1);
-				returner[val] = img;
+				returner[val] = img.src;
 			})
 		return returner;
 	})()
@@ -73,16 +73,17 @@ class EOTEROLL {
 		}
 
 	}
+	static DiceRollToOutcomeLists = {
+		boost: [[], [], [EOutcome.success], [EOutcome.success, EOutcome.advantage], [EOutcome.advantage, EOutcome.advantage], [EOutcome.advantage]],
+		setback: [[], [], [EOutcome.failure], [EOutcome.failure], [EOutcome.threat], [EOutcome.threat]],
+		ability: [[], [EOutcome.success], [EOutcome.success], [EOutcome.success, EOutcome.success], [EOutcome.advantage], [EOutcome.advantage], [EOutcome.advantage, EOutcome.success], [EOutcome.advantage, EOutcome.advantage],],
+		difficulty: [[], [EOutcome.failure], [EOutcome.failure, EOutcome.failure], [EOutcome.threat], [EOutcome.threat], [EOutcome.threat], [EOutcome.threat, EOutcome.threat], [EOutcome.threat, EOutcome.failure],],
+		proficiency: [[], [EOutcome.success], [EOutcome.success], [EOutcome.success, EOutcome.success], [EOutcome.success, EOutcome.success], [EOutcome.advantage], [EOutcome.advantage, EOutcome.success], [EOutcome.advantage, EOutcome.success], [EOutcome.advantage, EOutcome.success], [EOutcome.advantage, EOutcome.advantage], [EOutcome.advantage, EOutcome.advantage], [EOutcome.triumph],],
+		challenge: [[], [EOutcome.failure], [EOutcome.failure], [EOutcome.failure, EOutcome.failure], [EOutcome.failure, EOutcome.failure], [EOutcome.threat], [EOutcome.threat], [EOutcome.threat, EOutcome.failure], [EOutcome.threat, EOutcome.failure], [EOutcome.threat, EOutcome.threat], [EOutcome.threat, EOutcome.threat], [EOutcome.despair]],
+		force: [[EOutcome.darkside], [EOutcome.darkside], [EOutcome.darkside], [EOutcome.darkside], [EOutcome.darkside], [EOutcome.darkside], [EOutcome.darkside, EOutcome.darkside], [EOutcome.lightside], [EOutcome.lightside], [EOutcome.lightside, EOutcome.lightside], [EOutcome.lightside, EOutcome.lightside], [EOutcome.lightside, EOutcome.lightside],],
+	}
 	static DiceRollToOutcome(dice: EDice, value: number) {
-		switch (dice) {
-			case EDice.boost: return [[], [], [EOutcome.success], [EOutcome.success, EOutcome.advantage], [EOutcome.advantage, EOutcome.advantage], [EOutcome.advantage]][value - 1]
-			case EDice.setback: return [[], [], [EOutcome.failure], [EOutcome.failure], [EOutcome.threat], [EOutcome.threat]][value - 1]
-			case EDice.ability: return [[], [EOutcome.success], [EOutcome.success], [EOutcome.success, EOutcome.success], [EOutcome.advantage], [EOutcome.advantage], [EOutcome.advantage, EOutcome.success], [EOutcome.advantage, EOutcome.advantage],][value - 1]
-			case EDice.difficulty: return [[], [EOutcome.failure], [EOutcome.failure, EOutcome.failure], [EOutcome.threat], [EOutcome.threat], [EOutcome.threat], [EOutcome.threat, EOutcome.threat], [EOutcome.threat, EOutcome.failure],][value - 1]
-			case EDice.proficiency: return [[], [EOutcome.success], [EOutcome.success], [EOutcome.success, EOutcome.success], [EOutcome.success, EOutcome.success], [EOutcome.advantage], [EOutcome.advantage, EOutcome.success], [EOutcome.advantage, EOutcome.success], [EOutcome.advantage, EOutcome.success], [EOutcome.advantage, EOutcome.advantage], [EOutcome.advantage, EOutcome.advantage], [EOutcome.triumph],][value - 1]
-			case EDice.challenge: return [[], [EOutcome.failure], [EOutcome.failure], [EOutcome.failure, EOutcome.failure], [EOutcome.failure, EOutcome.failure], [EOutcome.threat], [EOutcome.threat], [EOutcome.threat, EOutcome.failure], [EOutcome.threat, EOutcome.failure], [EOutcome.threat, EOutcome.threat], [EOutcome.threat, EOutcome.threat], [EOutcome.despair]][value - 1]
-			case EDice.force: return [[EOutcome.darkside], [EOutcome.darkside], [EOutcome.darkside], [EOutcome.darkside], [EOutcome.darkside], [EOutcome.darkside], [EOutcome.darkside, EOutcome.darkside], [EOutcome.lightside], [EOutcome.lightside], [EOutcome.lightside, EOutcome.lightside], [EOutcome.lightside, EOutcome.lightside], [EOutcome.lightside, EOutcome.lightside],][value - 1]
-		}
+		return this.DiceRollToOutcomeLists[EDice[dice]][value - 1];
 	}
 	constructor() {
 		this.roll()
@@ -94,7 +95,7 @@ class EOTEROLL {
 				while (
 					this.rolls.filter((r) => {
 						return r.dice == EDice[diceKey]
-					}).length < 1000
+					}).length < 10
 				) {
 					let r: IRoll = {
 						dice: EDice[diceKey],
@@ -105,6 +106,7 @@ class EOTEROLL {
 					this.rolls.push(r);
 				}
 			})
+
 		return this;
 	}
 	public calculate(throws: IThrow = {}): IRollCalc {
@@ -172,7 +174,8 @@ class EOTEROLL {
 		function rollToHTML() {
 			var roll: IRollCalc = self.calculate(thrower);
 
-			output.innerHTML = '';
+
+			var html = '';
 
 			output.title = `${Math.abs(roll.success)} ${roll.success >= 0 ? 'successes' : 'failures'}` +
 				"\n" +
@@ -205,7 +208,6 @@ class EOTEROLL {
 					}, 0)} lightside`
 
 
-
 			var success = Math.abs(roll.success)
 			var advantage = Math.abs(roll.advantage)
 
@@ -213,37 +215,42 @@ class EOTEROLL {
 				let dice = roll.result[diceIndex];
 				for (let o = 0; o < dice.outcome.length; o++) {
 					let outcome = dice.outcome[o];
-					let img = <HTMLImageElement>output.appendChild(EOTEROLL.Images[EOutcome[outcome]].cloneNode(true))
+					let img = `<img src="${EOTEROLL.Images[EOutcome[outcome]]}" title="${EOutcome[outcome]}" `
 
 					switch (outcome) {
 						case EOutcome.advantage:
-							if (advantage > 0 && roll.advantage > 0) { advantage--; } else { img.style.opacity = "0.1"; }
+							if (advantage > 0 && roll.advantage > 0) { advantage--; } else { img += ` style="opacity: 0.1;"` }
 							break;
 						case EOutcome.threat:
-							if (advantage > 0 && roll.advantage < 0) { advantage--; } else { img.style.opacity = "0.1"; }
+							if (advantage > 0 && roll.advantage < 0) { advantage--; } else { img += ` style="opacity: 0.1;"` }
 							break;
 
 						case EOutcome.success:
-							if (success > 0 && roll.success > 0) { success--; } else { img.style.opacity = "0.1"; }
+							if (success > 0 && roll.success > 0) { success--; } else { img += ` style="opacity: 0.1;"` }
 							break;
 						case EOutcome.failure:
-							if (success > 0 && roll.success < 0) { success--; } else { img.style.opacity = "0.1"; }
+							if (success > 0 && roll.success < 0) { success--; } else { img += ` style="opacity: 0.1;"` }
 							break;
 					}
+
+					html += img + ' />';
 				}
 			}
+
+			output.innerHTML = html;
 		}
 
 		['proficiency', 'ability', 'boost', 'challenge', 'difficulty', 'setback', 'force']
 			.forEach((val, i) => {
 				let buttonField = container.appendChild(document.createElement("label"))
-				buttonField.appendChild(EOTEROLL.Images[val].cloneNode())
+				buttonField.appendChild(document.createElement("img")).src = EOTEROLL.Images[val];
 
 				let input = buttonField.appendChild(document.createElement("input"));
 				input.value = "";
 				input.type = "number";
 				input.min = "0";
 				input.step = "1";
+				input.name = val;
 				buttonField.title = input.placeholder = input.title = val[0].toUpperCase() + val.slice(1);
 				thrower[val] = 0
 
@@ -259,7 +266,10 @@ class EOTEROLL {
 		let buttonField = container.appendChild(document.createElement("label"))
 		let rollBtn = buttonField.appendChild(document.createElement("button"));
 		rollBtn.textContent = rollBtn.title = "ROLL"
-		rollBtn.onclick = () => { self.roll(); rollToHTML(): }
+		rollBtn.onclick = () => {
+			self.roll();
+			rollToHTML()
+		}
 
 		container.appendChild(output)
 
@@ -272,3 +282,4 @@ class EOTEROLL {
 var roll = new EOTEROLL()
 
 document.body.appendChild(roll.DOM());
+
